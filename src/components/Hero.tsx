@@ -1,9 +1,26 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import ParticleBackground from "./ParticleBackground";
 
 export default function Hero() {
+    const sectionRef = useRef(null);
+
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ["start start", "end start"],
+    });
+
+    // Parallax: blobs move slower than content
+    const blobY1 = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+    const blobY2 = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+    const blobScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.3]);
+
+    // Text parallax: moves faster (pushed up)
+    const textY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+    const textOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+
     const scrollToAbout = () => {
         document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
     };
@@ -11,21 +28,66 @@ export default function Hero() {
     return (
         <section
             id="hero"
+            ref={sectionRef}
             className="relative flex min-h-screen items-center justify-center overflow-hidden"
         >
             <ParticleBackground />
 
-            {/* Gradient overlays */}
+            {/* Parallax gradient blobs with continuous floating */}
             <div className="pointer-events-none absolute inset-0 z-[1]">
-                <div className="absolute left-1/2 top-1/4 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-cyan-500/5 blur-[120px]" />
-                <div className="absolute right-1/4 bottom-1/4 h-[300px] w-[300px] rounded-full bg-cyan-400/5 blur-[100px]" />
+                <motion.div
+                    style={{ y: blobY1, scale: blobScale }}
+                    animate={{
+                        y: [0, -20, 0, 15, 0],
+                        x: [0, 10, -5, 8, 0],
+                    }}
+                    transition={{
+                        duration: 12,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                    }}
+                    className="absolute left-1/2 top-1/4 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-cyan-500/5 blur-[120px]"
+                />
+                <motion.div
+                    style={{ y: blobY2, scale: blobScale }}
+                    animate={{
+                        y: [0, 15, -10, 20, 0],
+                        x: [0, -12, 8, -6, 0],
+                    }}
+                    transition={{
+                        duration: 16,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 2,
+                    }}
+                    className="absolute right-1/4 bottom-1/4 h-[300px] w-[300px] rounded-full bg-cyan-400/5 blur-[100px]"
+                />
+                {/* Extra floating accent */}
+                <motion.div
+                    animate={{
+                        y: [0, -30, 10, -15, 0],
+                        x: [0, 15, -10, 20, 0],
+                        scale: [1, 1.1, 0.95, 1.05, 1],
+                    }}
+                    transition={{
+                        duration: 20,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 4,
+                    }}
+                    className="absolute left-1/4 bottom-1/3 h-[250px] w-[250px] rounded-full bg-blue-500/3 blur-[100px]"
+                />
             </div>
 
-            <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
+            {/* Content with scroll parallax */}
+            <motion.div
+                style={{ y: textY, opacity: textOpacity }}
+                className="relative z-10 mx-auto max-w-4xl px-6 text-center"
+            >
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                     <span className="mb-6 inline-block rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-xs font-medium tracking-widest text-cyan-400 uppercase">
                         Medical Informatics · AI · Machine Learning
@@ -33,9 +95,13 @@ export default function Hero() {
                 </motion.div>
 
                 <motion.h1
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                        duration: 1,
+                        delay: 0.15,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
                     className="mt-4 font-heading text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
                     style={{ fontFamily: "var(--font-heading)" }}
                 >
@@ -47,19 +113,29 @@ export default function Hero() {
                 </motion.h1>
 
                 <motion.p
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    initial={{ opacity: 0, y: 50, filter: "blur(8px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                        duration: 1,
+                        delay: 0.3,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
                     className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg"
                 >
-                    Hi, I&apos;m <span className="font-semibold text-white">Ranu Kumbolo</span>.
-                    Medical Informatics Student &amp; IT Lab Assistant | Web Dev, AI, &amp; ML Enthusiast.
+                    Hi, I&apos;m{" "}
+                    <span className="font-semibold text-white">Ranu Kumbolo</span>.
+                    Medical Informatics Student &amp; IT Lab Assistant | Web Dev, AI,
+                    &amp; ML Enthusiast.
                 </motion.p>
 
                 <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    initial={{ opacity: 0, y: 50, filter: "blur(8px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                        duration: 1,
+                        delay: 0.45,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
                     className="mt-10"
                 >
                     <button
@@ -74,7 +150,11 @@ export default function Hero() {
                             stroke="currentColor"
                             strokeWidth={2}
                         >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19 9l-7 7-7-7"
+                            />
                         </svg>
                     </button>
                 </motion.div>
@@ -94,7 +174,7 @@ export default function Hero() {
                         <div className="h-1.5 w-1 rounded-full bg-cyan-400/60" />
                     </motion.div>
                 </motion.div>
-            </div>
+            </motion.div>
         </section>
     );
 }
